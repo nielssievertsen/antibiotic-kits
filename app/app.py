@@ -9,12 +9,6 @@ client = MongoClient('localhost:27017')
 db = client.MachineData
 
 
-@application.route('/')
-def showMachineList():
-    return render_template("list.html")
-
-
-
 @application.route("/addMachine", methods=['POST'])
 def addMachine():
     """Insert record to MongoDb"""
@@ -34,6 +28,30 @@ def addMachine():
 
     except Exception,e:
         return jsonify(status='ERROR',message=str(e))
+
+
+@application.route('/')
+def showMachineList():
+    return render_template("list.html")
+
+@application.route('/getMachine',methods=['POST'])
+def getMachine():
+    try:
+        machineId = request.json['id']
+        machine = db.Machines.find_one({'_id':ObjectId(machineId)})
+        machineDetail = {
+                'device':machine['device'],
+                'ip':machine['ip'],
+                'username':machine['username'],
+                'password':machine['password'],
+                'port':machine['port'],
+                'id':str(machine['_id'])
+                }
+        return json.dumps(machineDetail)
+    except Exception, e:
+        return str(e)
+
+
 
 @application.route("/getMachineList",methods=['POST'])
 def getMachineList():
