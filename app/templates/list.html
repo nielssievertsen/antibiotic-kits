@@ -20,7 +20,34 @@
 
     <script src="static/js/angular.js"></script>
 
+    <script>
+      angular.module('MyApp', [])
+        .controller('HomeCtrl', function($scope, $http) {
 
+          $scope.info = {};
+
+          $scope.showAdd  = true;
+
+          $scope.addMachine = function () {
+
+            $http({
+              method: 'POST',
+              url: '/addMachine',
+              data: {
+                  info: $scope.info
+              }
+            }).then(function(response){
+              $scope.showlist();
+              $('#addPopUp').modal('hide')
+                $scope.info = {}
+              }, function(error) {
+                  console.log(error);
+              });
+
+          }
+
+        })
+    </script>
 
 </head>
 
