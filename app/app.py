@@ -1,17 +1,15 @@
-from flask import Flask, render_template
 from pymongo import MongoClient
+from bson.objectid import ObjectId
+from flask import Flask,render_template,jsonify,json,request
 from fabric.api import *
-
 
 application = Flask(__name__)
 
 client = MongoClient('localhost:27017')
 db = client.MachineData
 
-
-@application.route("/addMachine", methods=['POST'])
+@application.route("/addMachine",methods=['POST'])
 def addMachine():
-    """Insert record to MongoDb"""
     try:
         json_data = request.json['info']
         deviceName = json_data['device']
@@ -21,18 +19,16 @@ def addMachine():
         portNumber = json_data['port']
 
         db.Machines.insert_one({
-            'device':deviceName,'ip':ipAddress,'username':userName
-            ,'password':password,'port':portNumber
+            'device':deviceName,'ip':ipAddress,'username':userName,'password':password,'port':portNumber
             })
         return jsonify(status='OK',message='inserted successfully')
 
     except Exception,e:
         return jsonify(status='ERROR',message=str(e))
 
-
 @application.route('/')
 def showMachineList():
-    return render_template("list.html")
+    return render_template('list.html')
 
 @application.route('/getMachine',methods=['POST'])
 def getMachine():
@@ -51,11 +47,24 @@ def getMachine():
     except Exception, e:
         return str(e)
 
+@application.route('/updateMachine',methods=['POST'])
+def updateMachine():
+    try:
+        machineInfo = request.json['info']
+        machineId = machineInfo['id']
+        device = machineInfo['device']
+        ip = machineInfo['ip']
+        username = machineInfo['username']
+        password = machineInfo['password']
+        port = machineInfo['port']
 
+        db.Machines.update_one({'_id':ObjectId(machineId)},{'$set':{'device':device,'ip':ip,'username':username,'password':password,'port':port}})
+        return jsonify(status='OK',message='updated successfully')
+    except Exception, e:
+        return jsonify(status='ERROR',message=str(e))
 
 @application.route("/getMachineList",methods=['POST'])
 def getMachineList():
-    """Fetch details from MongoDb via find() API"""
     try:
         machines = db.Machines.find()
         
@@ -75,49 +84,8 @@ def getMachineList():
         return str(e)
     return json.dumps(machineList)
 
-############# New section of tutorial 
-
-@application.route('/updateMachine',methods=['POST'])
-def updateMachine():
-    """Update machine with id passed by user"""
-    try:
-        machineInfo = request.json['info']
-        machineId = machineInfo['id']
-        device = machineInfo['device']
-        ip = machineInfo['ip']
-        username = machineInfo['username']
-        password = machineInfo['password']
-        port = machineInfo['port']
-
-        db.Machines.update_one({'_id':ObjectId(machineId)
-            },{'$set':{'device':device,'ip':ip,'username':username,
-            'password':password,'port':port}
-            })
-        return jsonify(status='OK',message='updated successfully')
-    except Exception, e:
-        return jsonify(status='ERROR',message=str(e))
-
-
-@application.route("/deleteMachine",methods=['POST'])
-def deleteMachine():
-    """Delete machine with id passed by user"""
-    try:
-        machineId = request.json['id']
-        db.Machines.remove({'_id':ObjectId(machineId)})
-        return jsonify(status='OK',message='deletion successful')
-    except Exception, e:
-        return jsonify(status='ERROR',message=str(e))
-
-
-############# New section of tutorial using fabric
-
 @application.route("/execute",methods=['POST'])
 def execute():
-    """Execute command requested by user. 
-
-    Command defined by machineInfo
-    Host_string and password need to be set
-    """
     try:
         machineInfo = request.json['info']
         ip = machineInfo['ip']
@@ -140,8 +108,15 @@ def execute():
         print 'Error is ' + str(e)
         return jsonify(status='ERROR',message=str(e))
 
-
-
+@application.route("/deleteMachine",methods=['POST'])
+def deleteMachine():
+    try:
+        machineId = request.json['id']
+        db.Machines.remove({'_id':ObjectId(machineId)})
+        return jsonify(status='OK',message='deletion successful')
+    except Exception, e:
+        return jsonify(status='ERROR',message=str(e))
 
 if __name__ == "__main__":
     application.run(host='0.0.0.0')
+
