@@ -1,6 +1,9 @@
-from flask import Flask, render_remplate
+from flask import Flask, render_template
 from pymongo import MongoClient
 from fabric.api import *
+
+
+application = Flask(__name__)
 
 client = MongoClient('localhost:27017')
 db = client.MachineData
@@ -14,7 +17,7 @@ def showMachineList():
 
 @application.route("/addMachine", methods=['POST'])
 def addMachine():
-"""Insert record to MongoDb"""
+    """Insert record to MongoDb"""
     try:
         json_data = request.json['info']
         deviceName = json_data['device']
@@ -34,7 +37,7 @@ def addMachine():
 
 @application.route("/getMachineList",methods=['POST'])
 def getMachineList():
-"""Fetch details from MongoDb via find() API"""
+    """Fetch details from MongoDb via find() API"""
     try:
         machines = db.Machines.find()
         
@@ -91,12 +94,12 @@ def deleteMachine():
 ############# New section of tutorial using fabric
 
 @application.route("/execute",methods=['POST'])
-"""Execute command requested by user. 
-
-Command defined by machineInfo
-Host_string and password need to be set
-"""
 def execute():
+    """Execute command requested by user. 
+
+    Command defined by machineInfo
+    Host_string and password need to be set
+    """
     try:
         machineInfo = request.json['info']
         ip = machineInfo['ip']
